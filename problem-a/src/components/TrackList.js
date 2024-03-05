@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
@@ -12,8 +12,30 @@ export default function TrackList({setAlertMessage}) { //setAlertMessage callbac
   const [previewAudio, setPreviewAudio] = useState(null); //for playing previews!
 
   const urlParams = useParams(); //get album from URL
-
+  const { collectionId } = urlParams;
   //YOUR CODE GOES HERE
+  useEffect(() => {
+    setIsQuerying(true); // Start the spinner
+    setAlertMessage(null); // Clear any previous error messages
+
+    const trackUrl = TRACK_QUERY_TEMPLATE.replace('{collectionId}', encodeURIComponent(collectionId));
+
+    fetch(trackUrl)
+      .then(response => response.json())
+      .then(data => {
+        if (data.resultCount === 0 || !data.results || data.results.length <= 1) {
+          throw new Error('No tracks found for album.');
+        }
+        setTrackData(data.results.slice(1)); // Assume the first result is album info and exclude it
+      })
+      .catch(error => {
+        setAlertMessage(error.message); 
+      })
+      .finally(() => {
+        setIsQuerying(false); // Stop the spinner
+      });
+  }, [collectionId, setAlertMessage]);
+
 
 
   //for fun: allow for clicking to play preview audio!
